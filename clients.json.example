@@ -1,0 +1,14 @@
+{
+  "clients": [
+    {
+      "id": "svc-a",
+      "redirect_uri": "https://svc-a.example.com/oauth/cb",
+      "secret": "replace-with-a-long-random-client-secret"
+    },
+    {
+      "id": "bot-a",
+      "flow": "device",
+      "secret": "replace-with-a-long-random-client-secret"
+    }
+  ]
+}
