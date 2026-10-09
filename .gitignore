@@ -63,3 +63,6 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# clients registry
+clients.json
