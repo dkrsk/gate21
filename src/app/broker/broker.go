@@ -99,7 +99,9 @@ func (b *Broker) Routes() http.Handler {
 	assetServer := http.FileServerFS(assets)
 
 	mux.Handle("GET /app.js", assetServer)
-	mux.Handle("GET /", assetServer)
+	mux.Handle("GET /style.css", assetServer)
+	mux.Handle("GET /favicon.svg", assetServer)
+	mux.HandleFunc("GET /{$}", b.handleLanding)
 	mux.HandleFunc("GET /authorize", b.handleAuthorize)
 	mux.HandleFunc("GET /device", b.handleDevicePage)
 	mux.HandleFunc("POST /api/login", b.handleAPILogin)
@@ -415,17 +417,27 @@ func (b *Broker) setFlowCookie(w http.ResponseWriter, value string, maxAge int) 
 	})
 }
 
+// handleLanding serves a static stub at the site root explaining what the
+// service is; the login page itself is only served by the authorize/device flows.
+func (b *Broker) handleLanding(w http.ResponseWriter, _ *http.Request) {
+	b.serveHTML(w, "index.html")
+}
+
 func (b *Broker) serveIndex(w http.ResponseWriter) {
-	data, err := fs.ReadFile(webassets.FS, "index.html")
+	b.serveHTML(w, "login.html")
+}
+
+func (b *Broker) serveHTML(w http.ResponseWriter, name string) {
+	data, err := fs.ReadFile(webassets.FS, name)
 	if err != nil {
-		b.log.Printf("serve index: %v", err)
+		b.log.Printf("serve %s: %v", name, err)
 		b.writeText(w, http.StatusInternalServerError, "internal error\n")
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "no-referrer")
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'")
 	w.Write(data)
 }
 

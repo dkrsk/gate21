@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="description" content="Вход в профиль platform.school21.ru через Gate to School 21.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+  <title>School 21 auth</title>
+</head>
+<body class="page-login">
+  <div class="warn" role="note">
+    Эта страница не связана с администрацией School 21. Перед вводом пароля
+    проверьте адрес в браузере — он должен быть <strong>https://gate21.dnkrsk.ru</strong>.
+    <br>
+    Вводите данные только если доверяете сервису, отправившему вас сюда.
+  </div>
+  <form class="card" id="login-form">
+    <h1>Gate to School 21</h1>
+    <p class="sub">Введите логин и пароль профиля platform.school21.ru</p>
+    <label for="username">Логин</label>
+    <input id="username" name="username" autocomplete="username" required autofocus>
+    <label for="password">Пароль</label>
+    <div class="pw-wrap">
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="pw-toggle" id="pw-toggle" type="button" aria-label="Показать пароль" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
+    </div>
+    <button id="submit" type="submit">Войти</button>
+    <div class="err" id="error" role="alert"></div>
+    <div class="ok" id="done" role="status">Вход подтверждён. Можно вернуться в бота.</div>
+  </form>
+  <footer class="footer">
+    <a href="https://github.com/dkrsk/gate21" rel="noopener" target="_blank">Исходный код</a>
+    <span>Входя, вы принимаете <a href="https://github.com/dkrsk/gate21/blob/main/TERMS.md" rel="noopener" target="_blank">условия использования</a></span>
+  </footer>
+  <script src="/app.js"></script>
+</body>
+</html>

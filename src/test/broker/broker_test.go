@@ -226,6 +226,88 @@ func TestFullLoginFlow(t *testing.T) {
 	}
 }
 
+func TestRootServesLandingStub(t *testing.T) {
+	srv, _ := newTestServer(t, successfulKeycloak())
+	resp, err := http.Get(srv.URL + "/")
+	if err != nil {
+		t.Fatalf("GET /: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET / status = %d, want 200", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("GET / Content-Type = %q, want text/html", ct)
+	}
+	if resp.Header.Get("Content-Security-Policy") == "" {
+		t.Error("GET / has no Content-Security-Policy header")
+	}
+	body, _ := io.ReadAll(resp.Body)
+	html := string(body)
+	if !strings.Contains(html, "Gate to School 21") {
+		t.Errorf("GET / did not serve landing stub: %s", html[:min(len(html), 200)])
+	}
+	if strings.Contains(html, "login-form") {
+		t.Error("GET / must not serve the login form")
+	}
+}
+
+func TestRootDoesNotCatchOtherPaths(t *testing.T) {
+	srv, _ := newTestServer(t, successfulKeycloak())
+	resp, err := http.Get(srv.URL + "/does-not-exist")
+	if err != nil {
+		t.Fatalf("GET /does-not-exist: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("GET /does-not-exist status = %d, want 404", resp.StatusCode)
+	}
+}
+
+func TestStaticAssetsServed(t *testing.T) {
+	srv, _ := newTestServer(t, successfulKeycloak())
+	for _, tc := range []struct{ path, ctype string }{
+		{"/style.css", "text/css"},
+		{"/favicon.svg", "image/svg+xml"},
+		{"/app.js", "text/javascript|application/javascript|text/ecmascript"},
+	} {
+		resp, err := http.Get(srv.URL + tc.path)
+		if err != nil {
+			t.Fatalf("GET %s: %v", tc.path, err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("GET %s status = %d, want 200", tc.path, resp.StatusCode)
+			continue
+		}
+		ct := resp.Header.Get("Content-Type")
+		ok := false
+		for _, p := range strings.Split(tc.ctype, "|") {
+			if strings.HasPrefix(ct, p) {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			t.Errorf("GET %s Content-Type = %q, want prefix %q", tc.path, ct, tc.ctype)
+		}
+	}
+}
+
+func TestLoginPageNotServedDirectly(t *testing.T) {
+	srv, _ := newTestServer(t, successfulKeycloak())
+	for _, p := range []string{"/login.html", "/index.html"} {
+		resp, err := http.Get(srv.URL + p)
+		if err != nil {
+			t.Fatalf("GET %s: %v", p, err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("GET %s status = %d, want 404 (login page must go through flows)", p, resp.StatusCode)
+		}
+	}
+}
+
 func TestAuthorizeUnknownClient(t *testing.T) {
 	srv, _ := newTestServer(t, successfulKeycloak())
 	resp, err := http.Get(srv.URL + "/authorize?client_id=unknown")
@@ -405,11 +487,16 @@ func TestLoginPageCSPAllowsSameOriginFetch(t *testing.T) {
 	}
 	for _, directive := range []string{
 		"default-src 'none'",
+		"style-src 'self'",
 		"script-src 'self'",
 		"connect-src 'self'",
+		"img-src 'self'",
 	} {
 		if !strings.Contains(csp, directive) {
 			t.Errorf("CSP %q missing %q", csp, directive)
 		}
+	}
+	if strings.Contains(csp, "unsafe-inline") {
+		t.Errorf("CSP %q must not allow unsafe-inline", csp)
 	}
 }

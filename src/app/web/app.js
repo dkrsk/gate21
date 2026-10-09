@@ -4,6 +4,38 @@
   var form = document.getElementById("login-form");
   var submit = document.getElementById("submit");
   var errorBox = document.getElementById("error");
+  var username = document.getElementById("username");
+  var password = document.getElementById("password");
+  var pwToggle = document.getElementById("pw-toggle");
+
+  username.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    password.focus();
+  });
+
+  pwToggle.addEventListener("click", function () {
+    var show = password.type === "password";
+    var start = null;
+    var end = null;
+    try {
+      start = password.selectionStart;
+      end = password.selectionEnd;
+    } catch (e) {}
+
+    password.type = show ? "text" : "password";
+    pwToggle.classList.toggle("on", show);
+    pwToggle.setAttribute("aria-pressed", show ? "true" : "false");
+    pwToggle.setAttribute("aria-label", show ? "Скрыть пароль" : "Показать пароль");
+
+    if (show && start !== null) {
+      try {
+        password.setSelectionRange(start, end);
+      } catch (e) {}
+    }
+  });
 
   function showError(message) {
     errorBox.textContent = message || "Не удалось войти. Попробуйте ещё раз.";
@@ -30,9 +62,7 @@
     event.preventDefault();
     hideError();
 
-    var username = document.getElementById("username").value;
-    var password = document.getElementById("password").value;
-    if (!username || !password) {
+    if (!username.value || !password.value) {
       showError("Введите логин и пароль");
       return;
     }
@@ -41,8 +71,8 @@
     var params = new URLSearchParams();
     params.set("client_id", "school21");
     params.set("grant_type", "password");
-    params.set("username", username);
-    params.set("password", password);
+    params.set("username", username.value);
+    params.set("password", password.value);
 
     fetch("/api/login", {
       method: "POST",
