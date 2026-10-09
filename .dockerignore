@@ -1,0 +1,16 @@
+# VCS / CI
+.git
+.gitignore
+.github
+
+# Docs
+docs
+*.md
+
+# Local secrets — never ship
+clients.json
+.env
+
+# Test artifacts
+*.out
+coverage.*
